@@ -88,6 +88,7 @@ func (ms *schema2ManifestHandler) verifyManifest(ctx context.Context, mnfst sche
 
 	references := mnfst.References()
 	g, gCtx := errgroup.WithContext(ctx)
+	g.SetLimit(DefaultConcurrencyLimit)
 	results := make([][]error, len(references))
 
 	for i, descriptor := range references {
