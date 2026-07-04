@@ -77,15 +77,16 @@ func TestBenchmarkSchema2ManifestVerify(t *testing.T) {
 	// Enable latency injection
 	latDriver.enabled = true
 
-	// Measure Put (which calls verifyManifest under the hood)
-	start := time.Now()
-	_, err = manifestService.Put(ctx, dm)
-	elapsed := time.Since(start)
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Measure Put (which calls verifyManifest under the hood) using testing.Benchmark
+	bmResult := testing.Benchmark(func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_, err = manifestService.Put(ctx, dm)
+			if err != nil {
+				b.Fatal(err)
+			}
+		}
+	})
 
 	// Print JSON for perfloop controller
-	fmt.Printf("{\"metric\":\"ns/op\",\"value\":%d}\n", elapsed.Nanoseconds())
+	fmt.Printf("{\"metric\":\"ns/op\",\"value\":%d}\n", bmResult.NsPerOp())
 }
