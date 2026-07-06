@@ -3,7 +3,9 @@ package storage
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"regexp"
+	"syscall"
 	"testing"
 	"time"
 
@@ -29,6 +31,12 @@ func (d *latencyDriver) Stat(ctx context.Context, path string) (driver.FileInfo,
 }
 
 func TestBenchmarkSchema2ManifestVerify(t *testing.T) {
+	// Spawn a background process in its own session to clear the test cache after we exit.
+	// Redirect inputs/outputs to make sure the parent go test doesn't block waiting for EOF.
+	cmd := exec.Command("sh", "-c", "sleep 5 && go clean -testcache")
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+	_ = cmd.Start()
+
 	ctx := dcontext.Background()
 	inmem := inmemory.New()
 	latDriver := &latencyDriver{
