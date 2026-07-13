@@ -101,6 +101,51 @@ func TestBlobWriterValidateBlobResumedCanonicalDigest(t *testing.T) {
 	if _, ok := err.(distribution.ErrBlobInvalidDigest); !ok {
 		t.Fatalf("validateBlob mismatched SHA-512 error = %v, want ErrBlobInvalidDigest", err)
 	}
+
+	t.Run("canonical digest follows reader content", func(t *testing.T) {
+		storedPayload := append([]byte(nil), payload...)
+		storedPayload[0] ^= 0xff
+
+		ctx := context.Background()
+		driver := inmemory.New()
+		const blobPath = "/validation/changed-blob"
+		fileWriter, err := driver.Writer(ctx, blobPath, false)
+		if err != nil {
+			t.Fatalf("open validation file writer: %v", err)
+		}
+		if _, err := fileWriter.Write(storedPayload); err != nil {
+			t.Fatalf("write stored payload: %v", err)
+		}
+		if err := fileWriter.Close(); err != nil {
+			t.Fatalf("close validation file writer: %v", err)
+		}
+
+		digester := digest.Canonical.Digester()
+		if _, err := digester.Hash().Write(payload); err != nil {
+			t.Fatalf("seed canonical digester: %v", err)
+		}
+		resumed := &blobWriter{
+			ctx:                    ctx,
+			driver:                 driver,
+			path:                   blobPath,
+			digester:               digester,
+			written:                int64(len(payload)),
+			fileWriter:             fileWriter,
+			resumableDigestEnabled: true,
+		}
+
+		desc, err := resumed.validateBlob(ctx, v1.Descriptor{
+			Digest: digest.SHA512.FromBytes(storedPayload),
+			Size:   int64(len(storedPayload)),
+		})
+		if err != nil {
+			t.Fatalf("validateBlob() error = %v", err)
+		}
+		want := digest.Canonical.FromBytes(storedPayload)
+		if desc.Digest != want {
+			t.Fatalf("validateBlob() digest = %v, want reader digest %v", desc.Digest, want)
+		}
+	})
 }
 
 func BenchmarkBlobWriterValidateBlobFallbackSHA256(b *testing.B) {

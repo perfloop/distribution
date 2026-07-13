@@ -251,8 +251,7 @@ func (bw *blobWriter) validateBlob(ctx context.Context, desc v1.Descriptor) (v1.
 			}
 			defer fr.Close()
 
-			switch {
-			case desc.Digest.Algorithm() == digest.Canonical:
+			if desc.Digest.Algorithm() == digest.Canonical {
 				digester := digest.Canonical.Digester()
 				if _, err := io.Copy(digester.Hash(), fr); err != nil {
 					return v1.Descriptor{}, err
@@ -260,14 +259,7 @@ func (bw *blobWriter) validateBlob(ctx context.Context, desc v1.Descriptor) (v1.
 
 				canonical = digester.Digest()
 				verified = desc.Digest == canonical
-			case canonical != "":
-				verifier := desc.Digest.Verifier()
-				if _, err := io.Copy(verifier, fr); err != nil {
-					return v1.Descriptor{}, err
-				}
-
-				verified = verifier.Verified()
-			default:
+			} else {
 				digester := digest.Canonical.Digester()
 				verifier := desc.Digest.Verifier()
 				tr := io.TeeReader(fr, digester.Hash())
