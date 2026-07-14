@@ -3,6 +3,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
@@ -30,13 +31,16 @@ func BenchmarkBlobWriterResumeDigestFilesystem(b *testing.B) {
 			b.Fatalf("resume upload: %v", err)
 		}
 		b.StartTimer()
-		n, err := resumed.ReadFrom(emptyReader{})
+		n, err := resumed.ReadFrom(bytes.NewReader(nil))
 		b.StopTimer()
 		if err != nil {
 			b.Fatalf("read resumed upload: %v", err)
 		}
 		if n != 0 {
 			b.Fatalf("read %d bytes, want 0", n)
+		}
+		if err := resumed.Close(); err != nil {
+			b.Fatalf("close resumed upload: %v", err)
 		}
 	}
 }
