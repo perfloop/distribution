@@ -62,7 +62,7 @@ func (bw *blobWriter) Commit(ctx context.Context, desc v1.Descriptor) (v1.Descri
 		return v1.Descriptor{}, err
 	}
 
-	bw.Close()
+	bw.fileWriter.Close()
 	desc.Size = bw.Size()
 
 	canonical, err := bw.validateBlob(ctx, desc)

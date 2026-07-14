@@ -393,7 +393,7 @@ func TestBlobWriterCommitStorageSequence(t *testing.T) {
 	}
 
 	assertDescriptor(t, descriptor, wantDigest, len(payload))
-	assertCalls(t, fixture.driver, expectedFinalCommitCalls(true)...)
+	assertCalls(t, fixture.driver, expectedFinalCommitCalls(false)...)
 	assertCommittedBlob(t, fixture, wantDigest, payload)
 	assertUploadRemoved(t, fixture, uploadPath)
 }
@@ -410,7 +410,7 @@ func TestBlobWriterCommitFailureBoundaries(t *testing.T) {
 		if !errors.As(err, &invalidDigest) {
 			t.Fatalf("Commit error = %T %v, want ErrBlobInvalidDigest", err, err)
 		}
-		assertCalls(t, fixture.driver, expectedValidationFailureCalls(true)...)
+		assertCalls(t, fixture.driver, expectedValidationFailureCalls(false)...)
 
 		resumed, err := fixture.blobs.Resume(fixture.ctx, writer.ID())
 		if err != nil {
@@ -438,7 +438,7 @@ func TestBlobWriterCommitFailureBoundaries(t *testing.T) {
 			t.Fatalf("Commit = %v, want success despite ignored Close error", err)
 		}
 		assertDescriptor(t, descriptor, wantDigest, len(payload))
-		assertCalls(t, fixture.driver, expectedFinalCommitCalls(true)...)
+		assertCalls(t, fixture.driver, expectedFinalCommitCalls(false)...)
 		assertCommittedBlob(t, fixture, wantDigest, payload)
 		assertUploadRemoved(t, fixture, uploadPath)
 	})
@@ -455,7 +455,7 @@ func TestBlobWriterCommitFailureBoundaries(t *testing.T) {
 		if err != moveErr {
 			t.Fatalf("Commit error = %v, want original move error %v", err, moveErr)
 		}
-		assertCalls(t, fixture.driver, expectedMoveFailureCalls(true)...)
+		assertCalls(t, fixture.driver, expectedMoveFailureCalls(false)...)
 
 		fixture.driver.moveErr = nil
 		resumed, err := fixture.blobs.Resume(fixture.ctx, writer.ID())
@@ -483,7 +483,7 @@ func TestBlobWriterCommitFailureBoundaries(t *testing.T) {
 		if err != linkErr {
 			t.Fatalf("Commit error = %v, want original link error %v", err, linkErr)
 		}
-		assertCalls(t, fixture.driver, expectedLinkFailureCalls(true)...)
+		assertCalls(t, fixture.driver, expectedLinkFailureCalls(false)...)
 		assertCommittedBlob(t, fixture, wantDigest, payload)
 	})
 
@@ -499,7 +499,7 @@ func TestBlobWriterCommitFailureBoundaries(t *testing.T) {
 		if err != cleanupErr {
 			t.Fatalf("Commit error = %v, want original cleanup error %v", err, cleanupErr)
 		}
-		assertCalls(t, fixture.driver, expectedFinalCommitCalls(true)...)
+		assertCalls(t, fixture.driver, expectedFinalCommitCalls(false)...)
 		assertCommittedBlob(t, fixture, wantDigest, payload)
 
 		fixture.driver.deleteErr = nil
